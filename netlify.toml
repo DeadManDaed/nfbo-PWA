@@ -1,32 +1,52 @@
-# netlify.toml - Configuration de déploiement Netlify pour NBFO PWA
-
+# Configuration de build pour NBFO PWA
 [build]
+  # Pas de commande de build (app statique)
   command = ""
-  publish = ""
+  
+  # IMPORTANT : Publier depuis la racine
+  publish = "/"
+  
+[build.environment]
+  NODE_VERSION = "18"
 
+# Redirection SPA : toutes les URLs vers index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
 
+# Headers de sécurité pour toutes les pages
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
-    Cache-Control = "public, max-age=0, must-revalidate"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
 
+# Cache pour le Service Worker (toujours frais)
 [[headers]]
   for = "/service-worker.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
 
+# Cache long pour les JS
 [[headers]]
-  for = "/js/*"
+  for = "/js/*.js"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Cache long pour les icônes
 [[headers]]
-  for = "/icons/*"
+  for = "/icons/*.png"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# Manifest toujours à jour
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=0, must-revalidate"
