@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <title>Dashboard - NBFO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2e7d32">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <style>
         :root { --primary: #2e7d32; --admin: #1565c0; --bg: #f4f7f6; }
         body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; }
@@ -26,7 +31,22 @@
     </style>
 </head>
 <body>
-
+<!-- Scripts PWA (IMPORTANT : charger EN PREMIER) -->
+<script src="/js/ui-utils.js"></script>
+<script src="/js/db-local.js"></script>
+<script src="/js/api-mock.js"></script>
+<script src="js/common.js"></script>
+    <script src="js/stock-utils.js"></script>
+    <script src="/js/stock-intelligence.js"></script>
+    <script src="/js/store-detail.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/admin-1.js"></script>
+    <script src="js/admission.js"></script>
+    <script src="js/audits.js"></script>
+    <script src="js/messages.js"></script>
+    <script src="js/transferts.js"></script>      
+    <script src="js/users.js"></script>
 <header>
     <div style="font-weight:bold; color:var(--primary)">NBFO SYSTEM</div>
     <div>
@@ -519,19 +539,7 @@
 </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-     <script src="js/common.js"></script>
-    <script src="js/ui-utils.js"></script>
-    <script src="js/stock-utils.js"></script>
-    <script src="/js/stock-intelligence.js"></script>
-    <script src="/js/store-detail.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/admin-1.js"></script>
-    <script src="js/admission.js"></script>
-    <script src="js/audits.js"></script>
-    <script src="js/messages.js"></script>
-    <script src="js/transferts.js"></script>      
-    <script src="js/users.js"></script>
+     
         
 <script>
 
