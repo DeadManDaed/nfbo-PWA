@@ -2,7 +2,7 @@
 
 [build]
   # Pas de commande de build nécessaire (app statique)
-  command = "echo 'Aucun build requis - App statique'"
+  command = ""
   publish = "."
 
 # Headers de sécurité et performance
