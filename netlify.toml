@@ -3,7 +3,7 @@
 [build]
   # Pas de commande de build nécessaire (app statique)
   command = ""
-  publish = "."
+  publish = ""
 
 # Headers de sécurité et performance
 [[headers]]
