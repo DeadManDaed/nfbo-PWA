@@ -1,0 +1,42 @@
+{
+  "name": "nbfo-pwa",
+  "version": "1.0.0",
+  "description": "Système de gestion coopérative NBFO - Progressive Web App",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -p 8000 -c-1",
+    "start:https": "http-server -S -p 8443 -c-1",
+    "generate-icons": "node generate-icons.js",
+    "deploy:netlify": "netlify deploy --prod --dir=.",
+    "deploy:vercel": "vercel --prod",
+    "test": "echo \"✅ Aucun test configuré pour l'instant\"",
+    "build": "echo \"✅ Aucune étape de build nécessaire (app statique)\""
+  },
+  "keywords": [
+    "pwa",
+    "progressive-web-app",
+    "cooperative",
+    "agriculture",
+    "offline-first",
+    "indexeddb",
+    "android"
+  ],
+  "author": "NBFO Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nbfo-coop/nbfo-pwa.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nbfo-coop/nbfo-pwa/issues"
+  },
+  "homepage": "https://nbfo-coop.cm",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}

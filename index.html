@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2e7d32">
+    <meta name="description" content="Système de gestion coopérative NFBO - Mode PWA">
+    
+    <title>Connexion - NFBO Coopérative</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Apple PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NFBO">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/icons/icon-192x192.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-dark: #1b5e20;
+            --bg: #f4f7f6;
+            --error: #d32f2f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo i {
+            font-size: 60px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .logo p {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .error-box {
+            background: #ffebee;
+            color: var(--error);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            border-left: 4px solid var(--error);
+        }
+
+        .demo-credentials {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            border-left: 4px solid #1565c0;
+        }
+
+        .demo-credentials strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #1565c0;
+        }
+
+        .pwa-badge {
+            background: #4caf50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .install-prompt {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+        }
+
+        .install-prompt button {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <div class="pwa-badge"><i class="fa-solid fa-mobile-screen"></i> Mode PWA</div>
+            <i class="fa-solid fa-wheat-awn"></i>
+            <h1>NFBO Coopérative</h1>
+            <p>Système de Gestion Agricole</p>
+        </div>
+
+        <div id="installPrompt" class="install-prompt">
+            <p><strong>📱 Installer l'application</strong></p>
+            <p style="font-size: 13px;">Ajoutez NFBO à votre écran d'accueil pour un accès rapide</p>
+            <button id="installBtn">Installer maintenant</button>
+        </div>
+
+        <div id="errorBox" class="error-box"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label><i class="fa-solid fa-user"></i> Identifiant</label>
+                <input type="text" id="username" name="username" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> Mot de passe</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn-login">
+                <i class="fa-solid fa-right-to-bracket"></i> SE CONNECTER
+            </button>
+        </form>
+
+        <div class="demo-credentials">
+            <strong><i class="fa-solid fa-circle-info"></i> Comptes de démonstration :</strong>
+            <div>👤 Admin : <code>admin</code> / <code>admin123</code></div>
+            <div>📊 Auditeur : <code>auditeur</code> / <code>audit123</code></div>
+            <div>📦 Stock : <code>stock</code> / <code>stock123</code></div>
+        </div>
+    </div>
+
+    <!-- Scripts PWA (IMPORTANT : charger AVANT les autres scripts) -->
+    <script src="/js/db-local.js"></script>
+    <script src="/js/api-mock.js"></script>
+
+    <script>
+        // ========== SERVICE WORKER REGISTRATION ==========
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('✅ Service Worker enregistré:', reg.scope))
+                    .catch(err => console.error('❌ Erreur Service Worker:', err));
+            });
+        }
+
+        // ========== INSTALLATION PWA ==========
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').style.display = 'block';
+        });
+
+        document.getElementById('installBtn')?.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('✅ PWA installée');
+            }
+            
+            deferredPrompt = null;
+            document.getElementById('installPrompt').style.display = 'none';
+        });
+
+        // ========== GESTION CONNEXION ==========
+        const loginForm = document.getElementById('loginForm');
+        const errorBox = document.getElementById('errorBox');
+
+        // Utilitaire session (compatible avec auth.js)
+        window.AppUser = {
+            get: () => {
+                const data = sessionStorage.getItem('user');
+                return data ? JSON.parse(data) : null;
+            },
+            set: (user) => {
+                sessionStorage.setItem('user', JSON.stringify(user));
+            },
+            clear: () => {
+                sessionStorage.clear();
+            }
+        };
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBox.style.display = 'none';
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erreur de connexion');
+                }
+
+                // Stocke l'utilisateur
+                if (data.user) {
+                    AppUser.set(data.user);
+                    localStorage.setItem('username', data.user.username);
+                    localStorage.setItem('role', data.user.role);
+
+                    console.log('✅ Connexion réussie:', data.user);
+                    window.location.href = '/dashboard.html';
+                } else {
+                    throw new Error('Format de réponse invalide');
+                }
+
+            } catch (err) {
+                console.error('❌ Erreur login:', err);
+                errorBox.textContent = err.message;
+                errorBox.style.display = 'block';
+            }
+        });
+
+        // Redirection si déjà connecté
+        if (AppUser.get()) {
+            window.location.href = '/dashboard.html';
+        }
+    </script>
+</body>
+</html>
