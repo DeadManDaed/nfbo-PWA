@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - NBFO</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #2e7d32; --admin: #1565c0; --bg: #f4f7f6; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; }
+        
+        /* Layout */
+        header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        
+        /* Grille de tuiles */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .tile { background: white; padding: 30px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; border: 2px solid transparent; position: relative; }
+        .tile:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .tile i { font-size: 40px; color: var(--primary); margin-bottom: 15px; }
+        .tile.disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+        
+        /* Modules */
+        .module { display: none; background: white; padding: 30px; border-radius: 12px; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .btn-back { background: #eee; padding: 8px 15px; border-radius: 6px; cursor: pointer; border: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="font-weight:bold; color:var(--primary)">NBFO SYSTEM</div>
+    <div>
+        <span id="userRole" style="background:var(--primary); color:white; padding:3px 10px; border-radius:15px; font-size:12px; margin-right:10px;">ROLE</span>
+        <span id="userName">Utilisateur</span>
+    </div>
+</header>
+
+<div class="container">
+    <div id="main-grid" class="grid">
+    <div class="tile" id="tile-admission" data-role="superadmin,admin,stock,auditeur" onclick="openModule('admission')">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <h3>Admissions</h3></br>
+        <p>Gestion des entrées de stock</p>
+    </div>
+    
+    <div class="tile" id="tile-retrait" data-role="superadmin,admin,caisse" onclick="openModule('retrait')">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <h3>Ventes & Retraits</h3></br>
+        <p>Sorties et facturation</p>
+    </div>
+
+    <div class="tile" id="tile-transfert" data-role="superadmin,admin,stock,auditeur" onclick="openModule('transferts')" style="position:relative;">
+        <i class="fa-solid fa-truck-arrow-right"></i>
+        <h3>Transferts</h3></br>
+        <p>Expédier ou Recevoir</p>
+        <span id="badge-transfert" style="position:absolute; top:10px; right:10px; background:#ff5252; color:white; border-radius:50%; padding:2px 8px; font-size:12px; display:none;">
+            0
+        </span>
+    </div>
+    
+    <div class="tile" id="tile-audit" data-role="superadmin,admin,auditeur" onclick="openModule('audit')">
+        <i class="fa-solid fa-chart-line"></i>
+        <h3>Audit</h3></br>
+        <p>Performance et logs financiers</p>
+    </div>
+
+    <div class="tile" id="tile-messages" data-role="all" onclick="openModule('messages')">
+        <i class="fa-solid fa-envelope"></i>
+        <h3>Messagerie</h3></br></br>
+        <p>Alertes et notifications</p>
+    </div>
+
+    <div class="tile" id="tile-admin" data-role="admin,superadmin" onclick="openModule('admin')" style="border-color: #1565c033;">
+        <i class="fa-solid fa-user-gear" style="color:var(--admin)"></i>
+        <h3>Administration</h3></br>
+        <p>Configuration système</p>
+    </div>
+</div>
+
+    <div id="module-admission" class="module">
+    <div class="module-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;">
+        <h2 style="color:var(--primary); margin:0;">
+            <i class="fa-solid fa-truck-ramp-box"></i> Réception de Lot (Admissions)
+        </h2>
+        <button class="btn-back" onclick="closeModule()">← Dashboard</button>
+    </div>
+
+<form id="admissionForm">
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:25px;">
+        
+        <div class="form-card" style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="margin-top:0; color:#555;">
+                <i class="fa-solid fa-id-card"></i> Source & Destination
+            </h4>
+            
+            <label>Produit (Lot défini par l'Admin) *</label>
+            <select id="adm-lot-select" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:6px;">
+                <option value="">-- Sélectionner un lot --</option>
+            </select>
+
+            <div id="lot-info-preview" style="display:none; background:#e3f2fd; padding:12px; border-radius:6px; margin:10px 0; font-size:13px; border-left:4px solid #1565c0;">
+                <div><strong>Prix de référence :</strong> <span id="lot-prix-display">0</span> FCFA</div>
+                <div><strong>Unités acceptées :</strong> <span id="lot-unites-display">-</span></div>
+                <div><strong>Catégorie :</strong> <span id="lot-categorie-display">-</span></div>
+            </div>
+
+            <label>Producteur (Déposant) *</label>
+            <select id="adm-producer-select" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:6px;">
+                <option value="">-- Sélectionner un producteur --</option>
+            </select>
+
+            <label>Magasin de stockage *</label>
+            <select id="adm-magasin-select" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:6px;">
+                <option value="">-- Sélectionner un magasin --</option>
+            </select>
+        </div>
+
+        <div class="form-card" style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="margin-top:0; color:#555;">
+                <i class="fa-solid fa-weight-hanging"></i> Mesures & Finance
+            </h4>
+            
+            <div style="display:flex; gap:10px;">
+                <div style="flex:2;">
+                    <label>Quantité Brute *</label>
+                    <input type="number" id="adm-qty" step="0.01" min="0" required oninput="calculateInternalFinance()" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:6px;">
+                </div>
+                <div style="flex:1;">
+                    <label>Unité *</label>
+                    <select id="adm-unit" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:6px;">
+                        <option value="">-- Unité --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                <div class="form-group">
+                    <label>Expiration</label>
+                    <input type="date" id="adm-expiry" onchange="calculateInternalFinance()" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                </div>
+                <div class="form-group">
+                    <label>Paiement *</label>
+                    <select id="adm-payment-mode" required onchange="calculateInternalFinance()" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                        <option value="solde">Crédit Compte (5%)</option>
+                        <option value="mobile_money">Mobile Money (7%)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="finance-preview" style="background:#f1f8e9; padding:15px; border-radius:8px; border:1px solid #c5e1a5; margin-top:15px;">
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="font-size:13px;">Dû au Producteur :</span>
+                    <strong id="val-due">0 FCFA</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; color:#2e7d32; margin-top:5px;">
+                    <span style="font-size:13px;">Profit Coopérative :</span>
+                    <strong id="val-profit">0 FCFA</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card" style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="margin-top:0; color:#555;">
+                <i class="fa-solid fa-clipboard-check"></i> Audit Qualité
+            </h4>
+            <div id="zone-evaluation-qualite" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                <p style="color:#999; text-align:center; padding:20px;">Sélectionnez un lot pour voir les critères d'audit.</p>
+            </div>
+            
+            <input type="hidden" id="adm-quality" value="1.0">
+        </div>
+    </div>
+
+    <div style="margin-top:30px; text-align:right;">
+        <button type="submit" class="btn" style="background:var(--primary); color:white; padding:15px 50px; font-weight:bold; border:none; border-radius:6px; cursor:pointer;">
+            <i class="fa-solid fa-check-circle"></i> VALIDER L'ADMISSION
+        </button>
+    </div>
+</form>
+</div>    
+    
+    <div id="module-retrait" class="module"><div class="module-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="color:#d32f2f"><i class="fa-solid fa-cart-arrow-down"></i> Sortie de Stock / Vente</h2>
+    <button class="btn-back" onclick="closeModule()">← Retour</button>
+</div>
+
+<form id="retraitForm">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:25px;">
+        <div class="form-card">
+            <label>Magasin Source</label>
+            <select id="retraitMagasin" required onchange="loadStockForMagasin(this.value)" style="width:100%; padding:10px; margin:10px 0;">
+                <option value="">-- Choisir le magasin --</option>
+            </select>
+
+            <label>Produit en Stock (Lot)</label>
+            <select id="retraitLot" required style="width:100%; padding:10px; margin:10px 0;">
+                <option value="">-- Choisir un magasin d'abord --</option>
+            </select>
+            <label>Unité</label>
+            <select id="retraitUnite" required style="width:100%; padding:10px; margin:10px 0;">
+                <option value="">-- Choisir un lot d'abord --</option>
+            </select>
+        </div>
+
+        <div class="form-card">
+            <label>Quantité à sortir</label>
+            <input type="number" id="retraitQty" step="0.01" required style="width:100%; padding:10px; margin:10px 0;">
+            <!-- Place this directly after the quantity input inside the retrait form -->
+<div style="margin-top:8px; font-weight:600;">
+  Montant estimé : <span id="retraitMontantDisplay">—</span>
+</div>
+            
+            <label>Type de sortie</label>
+            <select id="retraitType" required style="width:100%; padding:10px; margin:10px 0;">
+                <option value="vente">Vente Client</option>
+                <option value="retour">Retour Producteur</option>
+                <option value="perte">Démarque / Perte</option>
+            </select>
+
+            <div id="venteResult" style="background:#fff3e0; padding:15px; border-radius:8px; margin-top:10px;">
+                <p style="margin:0; font-size:12px; color:#e65100;">Total Facturé :</p>
+                <div style="font-weight:bold; font-size:18px; color:#bf360c;"><span id="simVente">0</span> FCFA</div>
+            </div>
+        </div>
+    </div>
+    <div style="margin-top:30px; text-align:right;">
+        <button type="submit" class="btn" style="background:#d32f2f; color:white; padding:15px 40px;">VALIDER LA SORTIE</button>
+    </div>
+</form></div> 
+
+<div id="module-transferts" class="module">
+    <div class="module-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom: 2px solid #546e7a; padding-bottom: 10px;">
+        <h2 style="color:#546e7a; margin:0;"><i class="fa-solid fa-truck-arrow-right"></i> Transferts inter-magasins</h2>
+        <button class="btn-back" onclick="closeModule()">← Retour</button>
+    </div>
+
+    <div class="tabs" style="display:flex; gap:10px; margin-bottom:20px;">
+        <button class="tab-btn active" onclick="switchTab('expedier')" style="padding:10px 20px; border:none; border-radius:6px; background:var(--primary); color:white; cursor:pointer;">EXPÉDIER</button>
+        <button class="tab-btn" onclick="switchTab('receptionner')" style="padding:10px 20px; border:none; border-radius:6px; background:#eee; cursor:pointer;">RÉCEPTIONNER</button>
+    </div>
+
+   <form id="form-expedition" class="tab-content">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+        <div class="form-group">
+            <label>Magasin d'Origine (Source) *</label>
+            <select id="trans-magasin-source" required style="width:100%; padding:10px;">
+                <option value="">-- Sélectionner le magasin source --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Produit à transférer (Stock Local) *</label>
+            <select id="trans-lot" required style="width:100%; padding:10px;">
+                <option value="">-- Choisir d'abord un magasin source --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Unité *</label>
+            <select id="trans-unite" required style="width:100%; padding:10px;">
+                <option value="">-- Choisir d'abord un lot --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Magasin Destinataire *</label>
+            <select id="trans-dest" required style="width:100%; padding:10px;">
+                <option value="">-- Sélectionner un magasin --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Quantité à envoyer *</label>
+            <input type="number" id="trans-qty" step="0.01" required style="width:100%; padding:10px;">
+        </div>
+        
+        <div class="form-group">
+            <label>Chauffeur / Transporteur *</label>
+            <select id="trans-driver" required style="width:100%; padding:10px;">
+                <option value="">-- Choisir d'abord un magasin source --</option>
+            </select>
+        </div>
+    </div>
+    
+    <div style="margin-top:20px;">
+        <label>Note d'accompagnement (Optionnel)</label>
+        <textarea id="trans-note" style="width:100%; height:60px; padding:10px;"></textarea>
+    </div>
+    
+    <button type="submit" class="btn" style="background:#546e7a; color:white; margin-top:20px; padding:12px 30px; border:none; border-radius:6px; cursor:pointer;">
+        LANCER L'EXPÉDITION
+    </button>
+</form> 
+    <div id="list-reception" class="tab-content" style="display:none;">
+        <table style="width:100%; border-collapse: collapse; margin-top:10px; background:white;">
+            <thead>
+                <tr style="background:#f5f5f5;">
+                    <th style="padding:12px; text-align:left; border-bottom:1px solid #eee;">Provenance</th>
+                    <th style="padding:12px; text-align:left; border-bottom:1px solid #eee;">Produit</th>
+                    <th style="padding:12px; text-align:left; border-bottom:1px solid #eee;">Qté Envoyée</th>
+                    <th style="padding:12px; text-align:left; border-bottom:1px solid #eee;">Qté Reçue (Pesée)</th>
+                    <th style="padding:12px; text-align:left; border-bottom:1px solid #eee;">Qualité</th>
+                    <th style="padding:12px; text-align:left; border-bottom:1px solid #eee;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="table-reception-body">
+                <tr>
+                    <td style="padding:12px; border-bottom:1px solid #eee;">Magasin Douala</td>
+                    <td style="padding:12px; border-bottom:1px solid #eee;">Maïs Sec</td>
+                    <td style="padding:12px; border-bottom:1px solid #eee;">100 Sacs</td>
+                    <td style="padding:12px; border-bottom:1px solid #eee;"><input type="number" value="100" style="width:60px; padding:5px;"></td>
+                    <td style="padding:12px; border-bottom:1px solid #eee;">
+                        <select style="padding:5px;">
+                            <option>Grade A (Conforme)</option>
+                            <option>Grade B (Altéré)</option>
+                        </select>
+                    </td>
+                    <td style="padding:12px; border-bottom:1px solid #eee;"><button class="btn-small" onclick="validerReception(this)" style="padding:6px 12px; background:var(--primary); color:white; border:none; border-radius:4px; cursor:pointer;">ACCEPTER</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    
+</div>
+  
+    <div id="module-audit" class="module"><div class="audit-layout">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+        <h2 style="color:var(--admin); margin:0;"><i class="fa-solid fa-chart-line"></i> Audit & Performance</h2>
+        <div id="audit-validation-queue"> <p id = "notif"></p></div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn" onclick="refreshAuditData()" style="background:#eee;"><i class="fa-solid fa-rotate"></i> Actualiser</button>
+            <div style="display:flex; gap:10px;">
+    <button class="btn" onclick="exportAuditPDF()" style="background:#454545; color:white;">
+        <i class="fa-solid fa-file-pdf"></i> Imprimer Rapport
+    </button>
+    <button class="btn" onclick="refreshAuditData()" style="background:#eee;">...</button>
+</div>
+            <button class="btn-back" onclick="closeModule()">← Retour</button>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px; margin-bottom:30px;">
+        <div class="stat-card" style="background:#e3f2fd; padding:20px; border-radius:12px; border-left:5px solid #1565c0;">
+            <span style="font-size:12px; color:#1565c0; font-weight:bold; text-transform:uppercase;">Profit Virtuel Total</span>
+            <div style="font-size:24px; font-weight:bold; color:#0d47a1;"><span id="audit-total-profit">0</span> FCFA</div>
+        </div>
+        <div class="stat-card" style="background:#f1f8e9; padding:20px; border-radius:12px; border-left:5px solid #2e7d32;">
+            <span style="font-size:12px; color:#2e7d32; font-weight:bold; text-transform:uppercase;">Flux Admissions</span>
+            <div style="font-size:24px; font-weight:bold; color:#1b5e20;"><span id="audit-total-qty">0</span> Unités</div>
+        </div>
+        <div class="stat-card" style="background:#fff3e0; padding:20px; border-radius:12px; border-left:5px solid #e65100;">
+            <span style="font-size:12px; color:#e65100; font-weight:bold; text-transform:uppercase;">Alertes Qualité</span>
+            <div style="font-size:24px; font-weight:bold; color:#bf360c;"><span id="audit-alerts">0</span></div>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
+        <div style="background:white; padding:20px; border-radius:12px; border:1px solid #eee;">
+            <h4 style="margin-top:0;">Répartition du Profit par Magasin</h4>
+            <div id="performance-chart-container" style="min-height:300px; padding:10px; overflow-y:auto;">
+</div>
+        </div>
+
+        <div style="background:white; padding:20px; border-radius:12px; border:1px solid #eee;">
+            <h4 style="margin-top:0;">Dernières Transactions</h4>
+            <div id="audit-log-list" style="font-size:13px;">
+                <p style="color:#999;">Chargement des logs...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    </div>
+    <div id="module-messages" class="module"><div class="messaging-layout" style="display: flex; gap: 20px; height: 70vh;">
+    <div class="message-sidebar" style="flex: 1; border-right: 1px solid #eee; padding-right: 20px; display: flex; flex-direction: column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="color:var(--primary); margin:0;"><i class="fa-solid fa-envelope"></i> Messages</h2>
+            <button class="btn-back" onclick="closeModule()">←</button>
+        </div>
+        
+        <button class="btn" style="width:100%; margin-bottom:15px; background:var(--primary); color:white;" onclick="showNewMessageForm()">
+            <i class="fa-solid fa-pen-to-square"></i> Nouveau message
+        </button>
+
+        <div id="inbox-list" style="overflow-y:auto; flex-grow:1;">
+            <p style="text-align:center; color:#999; margin-top:20px;">Chargement de la boîte de réception...</p>
+        </div>
+    </div>
+
+    <div id="message-body" style="flex: 2; background: #f9f9f9; border-radius: 8px; padding: 20px; position: relative;">
+        <div id="message-content-display">
+            <p style="text-align:center; color:#999; margin-top:100px;">Sélectionnez un message pour le lire ou composez-en un nouveau.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .message-item {
+        padding: 12px; border-radius: 8px; background: white; margin-bottom: 10px;
+        cursor: pointer; border: 1px solid #eee; transition: 0.2s;
+    }
+    .message-item:hover { border-color: var(--primary); background: #f0fdf4; }
+    .message-item.unread { border-left: 4px solid var(--primary); font-weight: bold; }
+    .message-item .meta { font-size: 11px; color: #888; display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .message-item .subject { font-size: 14px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+
+
+    </div>
+    <div id="module-admin" class="module"><div class="admin-layout" style="display: flex; gap: 20px;">
+    <nav class="admin-sidebar" style="width: 220px; display: flex; flex-direction: column; gap: 10px;">
+        <h3 style="font-size: 14px; color: var(--admin); text-transform: uppercase;">Configuration</h3>
+        <button class="admin-nav-btn active" onclick="loadAdminSection('magasins')"><i class="fa-solid fa-shop"></i> Magasins</button>
+        <button class="admin-nav-btn" onclick="loadAdminSection('users')"><i class="fa-solid fa-users-gear"></i> Utilisateurs</button>
+        <button class="admin-nav-btn" onclick="loadAdminSection('employers')"><i class="fa-solid fa-id-badge"></i> Employés</button>
+        <button class="admin-nav-btn" onclick="loadAdminSection('producteurs')"><i class="fa-solid fa-wheat-awn"></i> Producteurs</button>
+        <button class="admin-nav-btn" onclick="loadAdminSection('lots')"><i class="fa-solid fa-tags"></i> Référentiel Lots</button>
+        <button class="admin-nav-btn" onclick="loadAdminSection('validations')"><i class="fa-solid fa-tags"></i> Validations</button>
+<button class="admin-nav-btn" onclick="loadAdminSection('caisse')">
+    <i class="fa-solid fa-cash-register"></i> Caisse & Paiements
+</button>
+
+        <hr style="width:100%; border:0; border-top:1px solid #ddd;">
+        <button class="btn-back" onclick="closeModule()">← Quitter</button>
+    </nav>
+        
+    <div id="admin-content" style="flex-grow: 1; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 id="admin-title" style="margin:0; font-size:1.5rem;">Magasins</h2>
+            <button class="btn" id="btn-add-admin" style="background:var(--admin); color:white;" onclick="showAdminForm()">+ Ajouter</button>
+        </div>
+        <div id="admin-table-wrapper" class="table-container">
+            </div>
+<div id="section-admin-caisse" class="admin-panel" style="display:none;">
+    <h3 style="color: #2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 10px;">
+        <i class="fa-solid fa-wallet"></i> Décaissement & Gestion des Soldes
+    </h3>
+
+    <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:25px; margin-top:20px;">
+        
+        <div style="background:white; padding:20px; border-radius:8px; border:1px solid #ddd; height:fit-content;">
+            <h4 style="margin-top:0; color:#555;">Nouveau Paiement</h4>
+            
+            <form id="admin-caisse-form">
+                <label style="font-size:13px; font-weight:bold; color:#666;">Bénéficiaire (Producteur)</label>
+                <select id="admin-caisse-select" required onchange="updateAdminCaisseSolde()" 
+                        style="width:100%; padding:10px; margin:8px 0 15px 0; border:1px solid #ccc; border-radius:4px;">
+                    <option value="">-- Choisir un producteur --</option>
+                    </select>
+
+                <div style="background:#f1f8e9; border:1px solid #c5e1a5; padding:15px; border-radius:6px; text-align:center; margin-bottom:15px;">
+                    <div style="font-size:12px; text-transform:uppercase; color:#558b2f;">Solde Disponible</div>
+                    <div id="admin-caisse-solde-display" style="font-size:22px; font-weight:bold; color:#2e7d32;">0 FCFA</div>
+                </div>
+
+                <label style="font-size:13px; font-weight:bold; color:#666;">Montant à verser</label>
+                <input type="number" id="admin-caisse-montant" required min="1" step="50" 
+                       style="width:100%; padding:10px; margin:8px 0 15px 0; border:1px solid #ccc; border-radius:4px;">
+
+                <label style="font-size:13px; font-weight:bold; color:#666;">Mode de paiement</label>
+                <select id="admin-caisse-mode" style="width:100%; padding:10px; margin:8px 0 15px 0; border:1px solid #ccc; border-radius:4px;">
+                    <option value="especes">Espèces (Cash)</option>
+                    <option value="mobile_money">Mobile Money</option>
+                    <option value="virement">Virement Bancaire</option>
+                </select>
+
+                <button type="submit" class="btn" style="width:100%; background:#2e7d32; color:white; padding:12px; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">
+                    <i class="fa-solid fa-check"></i> VALIDER LE PAIEMENT
+                </button>
+            </form>
+        </div>
+
+        <div style="background:white; padding:20px; border-radius:8px; border:1px solid #ddd;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h4 style="margin:0; color:#555;">Historique des Sorties de Caisse</h4>
+                <button onclick="loadAdminCaisseHistory()" style="background:none; border:none; cursor:pointer; color:#1565c0; font-size:12px;">
+                    <i class="fa-solid fa-rotate"></i> Actualiser
+                </button>
+            </div>
+            
+            <div style="overflow-x:auto;">
+                <table class="admin-table" style="width:100%; font-size:13px;">
+                    <thead style="background:#f9f9f9;">
+                        <tr>
+                            <th style="padding:8px;">Date</th>
+                            <th style="padding:8px;">Producteur</th>
+                            <th style="padding:8px;">Montant</th>
+                            <th style="padding:8px;">Caissier</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-caisse-history-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <div id="section-admin-local" class="admin-panel" style="display:none; margin-top: 20px;">
+    <h3 style="color: #37474f;"><i class="fa-solid fa-user-shield"></i> Approbations Locales en Attente</h3>
+    <div id="local-transfer-list" class="grid-container">
+        </div>
+</div>
+    </div>
+</div>
+
+<style>
+    .admin-nav-btn {
+        padding: 12px; border: none; border-radius: 6px; background: white;
+        text-align: left; cursor: pointer; transition: 0.2s; font-weight: 500; color: #555;
+    }
+    .admin-nav-btn:hover { background: #eef2f7; }
+    .admin-nav-btn.active { background: var(--admin); color: white; }
+    .admin-table { width: 100%; border-collapse: collapse; background: white; }
+    .admin-table th, .admin-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+</style>
+</div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+     <script src="js/common.js"></script>
+    <script src="js/ui-utils.js"></script>
+    <script src="js/stock-utils.js"></script>
+    <script src="/js/stock-intelligence.js"></script>
+    <script src="/js/store-detail.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/admin-1.js"></script>
+    <script src="js/admission.js"></script>
+    <script src="js/audits.js"></script>
+    <script src="js/messages.js"></script>
+    <script src="js/transferts.js"></script>      
+    <script src="js/users.js"></script>
+        
+<script>
+
+  // Script de contrôle principal (Dashboard)
+
+/**
+ * Ouvre une section spécifique et masque la grille principale.
+ * @param {string} id - L'identifiant du module (ex: 'audit', 'admission')
+ */
+function openModule(id) {
+    const user = AppUser.get();
+    
+    // 1. Double vérification de sécurité (Rôles)
+    const moduleElement = document.getElementById('module-' + id);
+    if (!moduleElement) {
+        console.error("Module introuvable :", id);
+        return;
+    }
+
+    // 2. On vérifie si l'utilisateur a le droit (on réutilise la logique data-role)
+    // Optionnel mais recommandé si tu veux blinder la sécurité UI
+    
+    // 3. Masquage de la grille et de tous les autres modules
+    document.getElementById('main-grid').style.display = 'none';
+    document.querySelectorAll('.module-container').forEach(m => m.style.display = 'none');
+    
+    // 4. Affichage du module demandé
+    moduleElement.style.display = 'block';
+    
+    // 5. Initialisation spécifique selon le module
+    console.log(`🛠 Initialisation du module : ${id}`);
+    
+    switch(id) {
+        case 'admission':
+            if (typeof initModuleAdmission === 'function') initModuleAdmission();
+            break;
+        case 'messages':
+            if (typeof loadInbox === 'function') loadInbox();
+            break;
+        case 'admin':
+            // Par défaut, on ouvre sur la gestion des magasins
+            if (typeof loadAdminSection === 'function') loadAdminSection('magasins');
+            break;
+        case 'audit':
+            if (typeof refreshAuditData === 'function') refreshAuditData();
+            break;
+        case 'transferts':
+            if (typeof initModuleTransfert === 'function') initModuleTransfert();
+            break;
+    }
+    
+    // Scroll automatique vers le haut
+    window.scrollTo(0, 0);
+}
+
+function closeModule() {
+    document.querySelectorAll('.module').forEach(m => m.style.display = 'none');
+    document.getElementById('main-grid').style.display = 'grid';
+}
+/**
+ * Initialise l'affichage des tuiles en fonction du rôle.
+ * @param {string} role - Le rôle de l'utilisateur (admin, auditeur, magasinier, etc.)
+ */
+function initDashboardTiles(role) {
+    console.log(`🔐 Filtrage des tuiles pour le rôle : ${role}`);
+    
+    // On récupère toutes les tuiles qui ont un attribut "data-role"
+    const tiles = document.querySelectorAll('.tile[data-role]');
+    
+    tiles.forEach(tile => {
+        const rolesAutorises = tile.getAttribute('data-role').split(',');
+        
+        // Si le rôle de l'utilisateur est dans la liste ou si la tuile est 'all'
+        if (rolesAutorises.includes(role) || rolesAutorises.includes('all')) {
+            tile.style.display = 'flex'; // Ou 'block' selon ton CSS
+        } else {
+            tile.style.display = 'none'; // On cache la tuile
+        }
+    });
+
+    // Mise à jour de l'interface (nom de l'utilisateur, etc.)
+    const user = AppUser.get();
+    if (user && document.getElementById('user-display-name')) {
+        document.getElementById('user-display-name').innerText = user.username;
+        document.getElementById('user-display-role').innerText = `(${role})`;
+    }
+}
+window.onload = () => {
+    // 1. Sécurité : On récupère l'utilisateur (via AppUser.get interne à requireLogin)
+    const user = requireLogin(); 
+    if (!user) return;
+
+    // 2. Mise à jour de l'UI Header (on garde ta logique d'affichage du nom)
+    const nameEl = document.getElementById('userName');
+    const roleEl = document.getElementById('userRole');
+    if (nameEl) nameEl.textContent = user.username;
+    if (roleEl) roleEl.textContent = user.role.toUpperCase();
+
+    // 3. Masquage automatique des tuiles (remplace tes IF/ELSE manuels)
+    initDashboardTiles(user.role);
+    
+    // 4. Lancement des services spécifiques (Audit / Transferts)
+    if (user.role === 'auditeur' || user.role === 'admin') {
+        checkPendingValidations(); // Vérifie les transferts en attente
+    }
+    console.log("🚀 Dashboard unique initialisé avec succès.");
+};
+    
+</script>
+</body>
+</html>
