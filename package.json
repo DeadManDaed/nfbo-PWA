@@ -1,7 +1,7 @@
 {
   "name": "nbfo-pwa",
   "version": "1.0.0",
-  "description": "Système de gestion coopérative NBFO - Progressive Web App",
+  "description": "Système de gestion coopérative NFBO - Progressive Web App",
   "main": "index.html",
   "scripts": {
     "start": "http-server -p 8000 -c-1",
@@ -21,7 +21,7 @@
     "indexeddb",
     "android"
   ],
-  "author": "NBFO Development Team",
+  "author": "Khepri Design",
   "license": "MIT",
   "devDependencies": {
     "http-server": "^14.1.1"
@@ -29,12 +29,12 @@
   "dependencies": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/nbfo-coop/nbfo-pwa.git"
+    "url": "https://github.com/DeadManDaed/nfbo-pwa.git"
   },
   "bugs": {
-    "url": "https://github.com/nbfo-coop/nbfo-pwa/issues"
+    "url": "https://github.com/DeadManDaed/nbfo-pwa/issues"
   },
-  "homepage": "https://nbfo-coop.cm",
+  "homepage": "https://nfbo-coop.cm",
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=6.0.0"
